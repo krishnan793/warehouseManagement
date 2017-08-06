@@ -1,0 +1,135 @@
+#!/usr/bin/env python
+
+# This node will perform a search pattern
+# 
+# Author : Ananthakrishnan U S
+
+import roslib
+# ardrone_tutorials has a good ardrone classs for controlling drone. load_manifest import that python module
+#roslib.load_manifest("ardrone_control")
+
+import rospy
+from geometry_msgs.msg import Twist
+from std_msgs.msg import Empty
+from visualization_msgs.msg import Marker
+#from drone_controller import BasicDroneController
+import time
+from sensor_msgs.msg import Image
+from sys import argv
+import zbar
+import cv2
+from cv_bridge import CvBridge, CvBridgeError
+import numpy
+import Image as Image2
+from rospy.numpy_msg import numpy_msg
+
+#from PIL import Image
+
+
+
+def reset_drone(pub1):
+	controller.SetCommand(0,0,0,0)
+	time.sleep(1)
+
+def search_pattern():
+	controller.SetCommand(0,0,0.2,0)
+	sleep(1)
+	controller.SetCommand(0,0,0,0)
+	sleep(1)
+
+def image_callback(msg):
+	#print type(msg.data)
+	#cv_image = numpy.asarray(self.bridge.imgmsg_to_cv(data, "bgr8"))
+
+	cv_image = bridge.imgmsg_to_cv2(msg, "mono8")
+	
+	
+	#print type(cv_image)
+	
+	pil = Image2.fromarray(cv_image)
+	#print type(pil)
+	width, height = pil.size
+	raw = pil.tobytes()
+	images = zbar.Image(width, height, 'Y800', raw)
+	scanner.scan(images)
+
+	# extract results
+	for symbol in images:
+		# do something useful with results
+		print 'decoded', symbol.type, 'symbol', '"%s"' % symbol.data
+
+	# clean up
+	del(images)
+	
+	#pil_im.show()
+	#cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
+	#cv2.cvtColor(cv_image,cv2.COLOR_RGB2GRAY,cv_image);
+	#cv_image2 = numpy.asarray(cv_image)
+	#cv2.cvtColor(cv_image,cv2.COLOR_RGB2GRAY,cv_image);	
+	#image = zbar.Image(width,height,'GREY',cv_image2.tostring())
+	#image = zbar.Image(width,height,'Y800',pil_im.tobytes())	
+	#results = scanner.scan(image)
+	#print results	
+	#for symbol in results:
+		# do something useful with results
+    	#	print 'decoded', symbol.type, 'symbol', '"%s"' % symbol.data
+
+
+#	try:
+#		# Convert your ROS Image message to OpenCV2
+#		cv2_img = bridge.imgmsg_to_cv2(msg, "bgr8")
+#		width, height = cv2_img.size
+#	#except CvBridgeError, e:
+#		print(e)
+
+def main():
+	rospy.init_node('image_listener')
+	# Define your image topic
+	image_topic = "/ardrone/image_raw"
+	
+	# Set up your subscriber and define its callback
+	rospy.Subscriber(image_topic, Image, image_callback)
+	# Spin until ctrl + c
+	rospy.spin()
+
+if __name__ == '__main__':
+	#rospy.init_node('qrcode_reader', anonymous=True)
+	#pub1 = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+	#controller = BasicDroneController()
+	# create a Processor
+	#proc = zbar.Processor()
+
+	# configure the Processor
+	#proc.parse_config('enable')
+
+	# initialize the Processor
+	#device = '/dev/video0'
+	#if len(argv) > 1:
+    	#	device = argv[1]
+
+	#proc.init(device)
+
+	# enable the preview window
+	#proc.visible = True
+
+	# read at least one barcode (or until window closed)
+	#proc.process_one()
+
+	# hide the preview window
+	#proc.visible = False
+
+	# extract results
+	#for symbol in proc.results:
+    	#	# do something useful with results
+    	#	print 'decoded', symbol.type, 'symbol', '"%s"' % symbol.data
+	scanner = zbar.ImageScanner()
+	bridge = CvBridge()	
+	# configure the reader
+	scanner.parse_config('enable')
+
+
+	main()
+	#rospy.spin()
+	
+
+
